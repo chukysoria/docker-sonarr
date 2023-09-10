@@ -16,7 +16,7 @@ ENV SONARR_BRANCH="develop"
 RUN \
   echo "**** install packages ****" && \
   apt-get update && \
-  install -y --no-install-recommends \
+  apt-get install -y --no-install-recommends \
     icu-libs \
     sqlite-libs \
     xmlstarlet && \
