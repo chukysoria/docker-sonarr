@@ -63,7 +63,6 @@ jobs:
           # generate Docker tags based on the following events/attributes
           flavor: 
             latest=true
-            suffix=${{ steps.meta-suffix.outputs.SUFFIX }}
           tags: |
             type=sha,prefix=${{ env.EXT_RELEASE_CLEAN }}-
             type=sha,prefix=,suffix=-${{ github.ref_name }}
