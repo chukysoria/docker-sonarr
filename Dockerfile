@@ -1,13 +1,13 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/linuxserver/baseimage-alpine:3.18
+FROM ghcr.io/linuxserver/baseimage-ubuntu:jammy
 
 # set version label
 ARG BUILD_DATE
 ARG VERSION
 ARG SONARR_VERSION
-LABEL build_version="Linuxserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
-LABEL maintainer="thespad"
+LABEL build_version="Chukyserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+LABEL maintainer="chukysoria"
 
 # set environment variables
 ENV XDG_CONFIG_HOME="/config/xdg"
@@ -15,7 +15,8 @@ ENV SONARR_BRANCH="develop"
 
 RUN \
   echo "**** install packages ****" && \
-  apk add --no-cache \
+  apt-get update && \
+  install -y --no-install-recommends \
     icu-libs \
     sqlite-libs \
     xmlstarlet && \
@@ -27,14 +28,17 @@ RUN \
   fi && \
   curl -o \
     /tmp/sonarr.tar.gz -L \
-    "https://download.sonarr.tv/v4/${SONARR_BRANCH}/${SONARR_VERSION}/Sonarr.${SONARR_BRANCH}.${SONARR_VERSION}.linux-musl-x64.tar.gz" && \
+    "https://download.sonarr.tv/v4/${SONARR_BRANCH}/${SONARR_VERSION}/Sonarr.${SONARR_BRANCH}.${SONARR_VERSION}.linux-arm.tar.gz" && \
   tar xzf \
     /tmp/sonarr.tar.gz -C \
     /app/sonarr/bin --strip-components=1 && \
   echo -e "UpdateMethod=docker\nBranch=${SONARR_BRANCH}\nPackageVersion=${VERSION}\nPackageAuthor=[linuxserver.io](https://linuxserver.io)" > /app/sonarr/package_info && \
   echo "**** cleanup ****" && \
+  apt-get clean && \
   rm -rf \
     /app/sonarr/bin/Sonarr.Update \
+    /var/lib/apt/lists/* \
+    /var/tmp/* \
     /tmp/*
 
 # add local files
