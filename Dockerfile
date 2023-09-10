@@ -17,8 +17,6 @@ RUN \
   echo "**** install packages ****" && \
   apt-get update && \
   apt-get install -y --no-install-recommends \
-    icu-libs \
-    sqlite-libs \
     xmlstarlet && \
   echo "**** install sonarr ****" && \
   mkdir -p /app/sonarr/bin && \
