@@ -34,7 +34,7 @@ jobs:
 
       - name: Find latest release of app
         run: |
-          echo "EXT_RELEASE=$((curl -sX GET http://services.sonarr.tv/v1/releases | jq -r "first(.[] | select(.branch==\"$SONARR_BRANCH\") | .version)")" >> "$GITHUB_ENV"
+          echo "EXT_RELEASE=$(curl -sX GET http://services.sonarr.tv/v1/releases | jq -r "first(.[] | select(.branch==\"$SONARR_BRANCH\") | .version)" >> "$GITHUB_ENV"
   
       - name: Sanite Release version
         run: |
