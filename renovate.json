@@ -41,7 +41,7 @@
     "sonarr": {
       "defaultRegistryUrlTemplate": " http://services.sonarr.tv/v1/releases",
       "transformTemplates": [
-        "{\"releases\":[$.*.[{\"version\": $.version,\"releaseTimestamp\": $.releaseDate}]],\"sourceUrl\": \"https://github.com/Sonarr/Sonarr\",\"homepage\": \"https://sonarr.tv/\"}"
+        "{\"releases\":[$.*.{\"version\": $.version,\"releaseTimestamp\": $.releaseDate}],\"sourceUrl\": \"https://github.com/Sonarr/Sonarr\",\"homepage\": \"https://sonarr.tv/\"}"
       ]
     }
   }
