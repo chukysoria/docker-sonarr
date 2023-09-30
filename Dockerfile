@@ -1,12 +1,17 @@
 # syntax=docker/dockerfile:1
 
-FROM ghcr.io/chukysoria/baseimage-ubuntu:jammy
+# syntax=docker/dockerfile:1
+
+ARG BUILD_FROM=ghcr.io/chukysoria/baseimage-ubuntu:v0.1.0-jammy
+
+FROM ${BUILD_FROM} 
 
 # set version label
 ARG BUILD_DATE
-ARG VERSION
-ARG SONARR_VERSION
-LABEL build_version="Chukyserver.io version:- ${VERSION} Build-date:- ${BUILD_DATE}"
+ARG BUILD_VERSION
+ARG BUILD_ARCH
+ARG BUILD_EXT_RELEASE="4.0.0.665"
+LABEL build_version="Chukyserver.io version:- ${BUILD_VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="chukysoria"
 
 # set environment variables
@@ -24,13 +29,28 @@ RUN \
     SONARR_VERSION=$(curl -sX GET http://services.sonarr.tv/v1/releases \
     | jq -r "first(.[] | select(.branch==\"$SONARR_BRANCH\") | .version)"); \
   fi && \
+  case ${BUILD_ARCH} in \
+      "armv7") \
+          ARCH="arm" \
+          ;; \
+      "aarch64") \
+          ARCH="arm64" \
+          ;; \
+      "x86_64") \
+          ARCH="x64" \
+          ;; \
+      *) \
+          echo "Unknown architecture: ${BUILD_ARCH}" && \
+          exit 1 \
+          ;; \
+  esac && \
   curl -o \
     /tmp/sonarr.tar.gz -L \
-    "https://download.sonarr.tv/v4/${SONARR_BRANCH}/${SONARR_VERSION}/Sonarr.${SONARR_BRANCH}.${SONARR_VERSION}.linux-arm.tar.gz" && \
+    "https://download.sonarr.tv/v4/${SONARR_BRANCH}/${BUILD_EXT_RELEASE}/Sonarr.${SONARR_BRANCH}.${BUILD_EXT_RELEASE}.linux-${ARCH}.tar.gz" && \
   tar xzf \
     /tmp/sonarr.tar.gz -C \
     /app/sonarr/bin --strip-components=1 && \
-  echo -e "UpdateMethod=docker\nBranch=${SONARR_BRANCH}\nPackageVersion=${VERSION}\nPackageAuthor=[linuxserver.io](https://linuxserver.io)" > /app/sonarr/package_info && \
+  echo -e "UpdateMethod=docker\nBranch=${SONARR_BRANCH}\nPackageVersion=${BUILD_VERSION}\nPackageAuthor=[linuxserver.io](https://linuxserver.io)" > /app/sonarr/package_info && \
   echo "**** cleanup ****" && \
   apt-get clean && \
   rm -rf \
