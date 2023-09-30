@@ -11,7 +11,21 @@ pipeline {
      string(defaultValue: 'false', description: 'package check run', name: 'PACKAGE_CHECK')
   }
   // Configuration for the variables used for this specific repo
+  options {
+    buildDiscarder(logRotator(numToKeepStr: '10', daysToKeepStr: '60'))
+    parallelsAlwaysFailFast()
+  }
+  // Input to determine if this is a package check
+  parameters {
+     string(defaultValue: 'false', description: 'package check run', name: 'PACKAGE_CHECK')
+  }
+  // Configuration for the variables used for this specific repo
   environment {
+    BUILDS_DISCORD=credentials('build_webhook_url')
+    GITHUB_TOKEN=credentials('498b4638-2d02-4ce5-832d-8a57d01d97ab')
+    GITLAB_TOKEN=credentials('b6f0f1dd-6952-4cf6-95d1-9c06380283f0')
+    GITLAB_NAMESPACE=credentials('gitlab-namespace-id')
+    SCARF_TOKEN=credentials('scarf_api_key')
     BUILDS_DISCORD=credentials('build_webhook_url')
     GITHUB_TOKEN=credentials('498b4638-2d02-4ce5-832d-8a57d01d97ab')
     GITLAB_TOKEN=credentials('b6f0f1dd-6952-4cf6-95d1-9c06380283f0')
@@ -31,6 +45,7 @@ pipeline {
     CI_PORT='8989'
     CI_SSL='false'
     CI_DELAY='120'
+    CI_DELAY='120'
     CI_DOCKERENV='TZ=US/Pacific'
     CI_AUTH='user:password'
     CI_WEBPATH='/system/status'
@@ -45,12 +60,20 @@ pipeline {
                 docker stop ${containers}
               fi
               docker system prune -af --volumes || : '''
+        sh '''#! /bin/bash
+              containers=$(docker ps -aq)
+              if [[ -n "${containers}" ]]; then
+                docker stop ${containers}
+              fi
+              docker system prune -af --volumes || : '''
         script{
+          env.EXIT_STATUS = ''
           env.EXIT_STATUS = ''
           env.LS_RELEASE = sh(
             script: '''docker run --rm quay.io/skopeo/stable:v1 inspect docker://ghcr.io/${LS_USER}/${CONTAINER_NAME}:develop 2>/dev/null | jq -r '.Labels.build_version' | awk '{print $3}' | grep '\\-ls' || : ''',
             returnStdout: true).trim()
           env.LS_RELEASE_NOTES = sh(
+            script: '''cat readme-vars.yml | awk -F \\" '/date: "[0-9][0-9].[0-9][0-9].[0-9][0-9]:/ {print $4;exit;}' | sed -E ':a;N;$!ba;s/\\r{0,1}\\n/\\\\n/g' ''',
             script: '''cat readme-vars.yml | awk -F \\" '/date: "[0-9][0-9].[0-9][0-9].[0-9][0-9]:/ {print $4;exit;}' | sed -E ':a;N;$!ba;s/\\r{0,1}\\n/\\\\n/g' ''',
             returnStdout: true).trim()
           env.GITHUB_DATE = sh(
@@ -62,6 +85,7 @@ pipeline {
           env.CODE_URL = 'https://github.com/' + env.LS_USER + '/' + env.LS_REPO + '/commit/' + env.GIT_COMMIT
           env.DOCKERHUB_LINK = 'https://hub.docker.com/r/' + env.DOCKERHUB_IMAGE + '/tags/'
           env.PULL_REQUEST = env.CHANGE_ID
+          env.TEMPLATED_FILES = 'Jenkinsfile README.md LICENSE .editorconfig ./.github/CONTRIBUTING.md ./.github/FUNDING.yml ./.github/ISSUE_TEMPLATE/config.yml ./.github/ISSUE_TEMPLATE/issue.bug.yml ./.github/ISSUE_TEMPLATE/issue.feature.yml ./.github/PULL_REQUEST_TEMPLATE.md ./.github/workflows/external_trigger_scheduler.yml ./.github/workflows/greetings.yml ./.github/workflows/package_trigger_scheduler.yml ./.github/workflows/call_issue_pr_tracker.yml ./.github/workflows/call_issues_cron.yml ./.github/workflows/permissions.yml ./.github/workflows/external_trigger.yml ./.github/workflows/package_trigger.yml ./root/donate.txt'
           env.TEMPLATED_FILES = 'Jenkinsfile README.md LICENSE .editorconfig ./.github/CONTRIBUTING.md ./.github/FUNDING.yml ./.github/ISSUE_TEMPLATE/config.yml ./.github/ISSUE_TEMPLATE/issue.bug.yml ./.github/ISSUE_TEMPLATE/issue.feature.yml ./.github/PULL_REQUEST_TEMPLATE.md ./.github/workflows/external_trigger_scheduler.yml ./.github/workflows/greetings.yml ./.github/workflows/package_trigger_scheduler.yml ./.github/workflows/call_issue_pr_tracker.yml ./.github/workflows/call_issues_cron.yml ./.github/workflows/permissions.yml ./.github/workflows/external_trigger.yml ./.github/workflows/package_trigger.yml ./root/donate.txt'
         }
         script{
@@ -87,6 +111,20 @@ pipeline {
     /* #######################
        Package Version Tagging
        ####################### */
+    // Grab the current package versions in Git to determine package tag
+    stage("Set Package tag"){
+      steps{
+        script{
+          env.PACKAGE_TAG = sh(
+            script: '''#!/bin/bash
+                       if [ -e package_versions.txt ] ; then
+                         cat package_versions.txt | md5sum | cut -c1-8
+                       else
+                         echo none
+                       fi''',
+            returnStdout: true).trim()
+        }
+      }
     // Grab the current package versions in Git to determine package tag
     stage("Set Package tag"){
       steps{
@@ -162,6 +200,9 @@ pipeline {
           env.GITHUBIMAGE = 'ghcr.io/' + env.LS_USER + '/' + env.CONTAINER_NAME
           env.GITLABIMAGE = 'registry.gitlab.com/linuxserver.io/' + env.LS_REPO + '/' + env.CONTAINER_NAME
           env.QUAYIMAGE = 'quay.io/linuxserver.io/' + env.CONTAINER_NAME
+          env.GITHUBIMAGE = 'ghcr.io/' + env.LS_USER + '/' + env.CONTAINER_NAME
+          env.GITLABIMAGE = 'registry.gitlab.com/linuxserver.io/' + env.LS_REPO + '/' + env.CONTAINER_NAME
+          env.QUAYIMAGE = 'quay.io/linuxserver.io/' + env.CONTAINER_NAME
           if (env.MULTIARCH == 'true') {
             env.CI_TAGS = 'amd64-develop-' + env.EXT_RELEASE_CLEAN + '-ls' + env.LS_TAG_NUMBER + '|arm64v8-develop-' + env.EXT_RELEASE_CLEAN + '-ls' + env.LS_TAG_NUMBER
           } else {
@@ -185,6 +226,9 @@ pipeline {
           env.GITHUBIMAGE = 'ghcr.io/' + env.LS_USER + '/lsiodev-' + env.CONTAINER_NAME
           env.GITLABIMAGE = 'registry.gitlab.com/linuxserver.io/' + env.LS_REPO + '/lsiodev-' + env.CONTAINER_NAME
           env.QUAYIMAGE = 'quay.io/linuxserver.io/lsiodev-' + env.CONTAINER_NAME
+          env.GITHUBIMAGE = 'ghcr.io/' + env.LS_USER + '/lsiodev-' + env.CONTAINER_NAME
+          env.GITLABIMAGE = 'registry.gitlab.com/linuxserver.io/' + env.LS_REPO + '/lsiodev-' + env.CONTAINER_NAME
+          env.QUAYIMAGE = 'quay.io/linuxserver.io/lsiodev-' + env.CONTAINER_NAME
           if (env.MULTIARCH == 'true') {
             env.CI_TAGS = 'amd64-develop-' + env.EXT_RELEASE_CLEAN + '-pkg-' + env.PACKAGE_TAG + '-dev-' + env.COMMIT_SHA + '|arm64v8-develop-' + env.EXT_RELEASE_CLEAN + '-pkg-' + env.PACKAGE_TAG + '-dev-' + env.COMMIT_SHA
           } else {
@@ -205,6 +249,9 @@ pipeline {
       steps {
         script{
           env.IMAGE = env.PR_DOCKERHUB_IMAGE
+          env.GITHUBIMAGE = 'ghcr.io/' + env.LS_USER + '/lspipepr-' + env.CONTAINER_NAME
+          env.GITLABIMAGE = 'registry.gitlab.com/linuxserver.io/' + env.LS_REPO + '/lspipepr-' + env.CONTAINER_NAME
+          env.QUAYIMAGE = 'quay.io/linuxserver.io/lspipepr-' + env.CONTAINER_NAME
           env.GITHUBIMAGE = 'ghcr.io/' + env.LS_USER + '/lspipepr-' + env.CONTAINER_NAME
           env.GITLABIMAGE = 'registry.gitlab.com/linuxserver.io/' + env.LS_REPO + '/lspipepr-' + env.CONTAINER_NAME
           env.QUAYIMAGE = 'quay.io/linuxserver.io/lspipepr-' + env.CONTAINER_NAME
@@ -249,6 +296,34 @@ pipeline {
     }
     // Use helper containers to render templated files
     stage('Update-Templates') {
+    // Run ShellCheck
+    stage('ShellCheck') {
+      when {
+        environment name: 'CI', value: 'true'
+      }
+      steps {
+        withCredentials([
+          string(credentialsId: 'ci-tests-s3-key-id', variable: 'S3_KEY'),
+          string(credentialsId: 'ci-tests-s3-secret-access-key', variable: 'S3_SECRET')
+        ]) {
+          script{
+            env.SHELLCHECK_URL = 'https://ci-tests.linuxserver.io/' + env.IMAGE + '/' + env.META_TAG + '/shellcheck-result.xml'
+          }
+          sh '''curl -sL https://raw.githubusercontent.com/linuxserver/docker-jenkins-builder/master/checkrun.sh | /bin/bash'''
+          sh '''#! /bin/bash
+                docker run --rm \
+                  -v ${WORKSPACE}:/mnt \
+                  -e AWS_ACCESS_KEY_ID=\"${S3_KEY}\" \
+                  -e AWS_SECRET_ACCESS_KEY=\"${S3_SECRET}\" \
+                  ghcr.io/linuxserver/baseimage-alpine:3.17 s6-envdir -fn -- /var/run/s6/container_environment /bin/bash -c "\
+                    apk add --no-cache py3-pip && \
+                    pip install s3cmd && \
+                    s3cmd put --no-preserve --acl-public -m text/xml /mnt/shellcheck-result.xml s3://ci-tests.linuxserver.io/${IMAGE}/${META_TAG}/shellcheck-result.xml" || :'''
+        }
+      }
+    }
+    // Use helper containers to render templated files
+    stage('Update-Templates') {
       when {
         branch "develop"
         environment name: 'CHANGE_ID', value: ''
@@ -258,6 +333,7 @@ pipeline {
       }
       steps {
         sh '''#! /bin/bash
+              set -e
               set -e
               TEMPDIR=$(mktemp -d)
               docker pull ghcr.io/linuxserver/jenkins-builder:latest
@@ -361,8 +437,41 @@ pipeline {
                 fi
                 git push https://LinuxServer-CI:${GITHUB_TOKEN}@github.com/linuxserver/templates.git --all
               fi
+              mkdir -p ${TEMPDIR}/gitbook
+              git clone https://github.com/linuxserver/docker-documentation.git ${TEMPDIR}/gitbook/docker-documentation
+              if [[ ("${BRANCH_NAME}" == "master") || ("${BRANCH_NAME}" == "main") ]] && [[ (! -f ${TEMPDIR}/gitbook/docker-documentation/images/docker-${CONTAINER_NAME}.md) || ("$(md5sum ${TEMPDIR}/gitbook/docker-documentation/images/docker-${CONTAINER_NAME}.md | awk '{ print $1 }')" != "$(md5sum ${TEMPDIR}/docker-${CONTAINER_NAME}/.jenkins-external/docker-${CONTAINER_NAME}.md | awk '{ print $1 }')") ]]; then
+                cp ${TEMPDIR}/docker-${CONTAINER_NAME}/.jenkins-external/docker-${CONTAINER_NAME}.md ${TEMPDIR}/gitbook/docker-documentation/images/
+                cd ${TEMPDIR}/gitbook/docker-documentation/
+                git add images/docker-${CONTAINER_NAME}.md
+                git commit -m 'Bot Updating Documentation'
+                git push https://LinuxServer-CI:${GITHUB_TOKEN}@github.com/linuxserver/docker-documentation.git --all
+              fi
+              mkdir -p ${TEMPDIR}/unraid
+              git clone https://github.com/linuxserver/docker-templates.git ${TEMPDIR}/unraid/docker-templates
+              git clone https://github.com/linuxserver/templates.git ${TEMPDIR}/unraid/templates
+              if [[ -f ${TEMPDIR}/unraid/docker-templates/linuxserver.io/img/${CONTAINER_NAME}-logo.png ]]; then
+                sed -i "s|master/linuxserver.io/img/linuxserver-ls-logo.png|master/linuxserver.io/img/${CONTAINER_NAME}-logo.png|" ${TEMPDIR}/docker-${CONTAINER_NAME}/.jenkins-external/${CONTAINER_NAME}.xml
+              elif [[ -f ${TEMPDIR}/unraid/docker-templates/linuxserver.io/img/${CONTAINER_NAME}-icon.png ]]; then
+                sed -i "s|master/linuxserver.io/img/linuxserver-ls-logo.png|master/linuxserver.io/img/${CONTAINER_NAME}-icon.png|" ${TEMPDIR}/docker-${CONTAINER_NAME}/.jenkins-external/${CONTAINER_NAME}.xml
+              fi
+              if [[ ("${BRANCH_NAME}" == "master") || ("${BRANCH_NAME}" == "main") ]] && [[ (! -f ${TEMPDIR}/unraid/templates/unraid/${CONTAINER_NAME}.xml) || ("$(md5sum ${TEMPDIR}/unraid/templates/unraid/${CONTAINER_NAME}.xml | awk '{ print $1 }')" != "$(md5sum ${TEMPDIR}/docker-${CONTAINER_NAME}/.jenkins-external/${CONTAINER_NAME}.xml | awk '{ print $1 }')") ]]; then
+                cd ${TEMPDIR}/unraid/templates/
+                if grep -wq "${CONTAINER_NAME}" ${TEMPDIR}/unraid/templates/unraid/ignore.list; then
+                  echo "Image is on the ignore list, marking Unraid template as deprecated"
+                  cp ${TEMPDIR}/docker-${CONTAINER_NAME}/.jenkins-external/${CONTAINER_NAME}.xml ${TEMPDIR}/unraid/templates/unraid/
+                  git add -u unraid/${CONTAINER_NAME}.xml
+                  git mv unraid/${CONTAINER_NAME}.xml unraid/deprecated/${CONTAINER_NAME}.xml || :
+                  git commit -m 'Bot Moving Deprecated Unraid Template' || :
+                else
+                  cp ${TEMPDIR}/docker-${CONTAINER_NAME}/.jenkins-external/${CONTAINER_NAME}.xml ${TEMPDIR}/unraid/templates/unraid/
+                  git add unraid/${CONTAINER_NAME}.xml
+                  git commit -m 'Bot Updating Unraid Template'
+                fi
+                git push https://LinuxServer-CI:${GITHUB_TOKEN}@github.com/linuxserver/templates.git --all
+              fi
               rm -Rf ${TEMPDIR}'''
         script{
+          env.FILES_UPDATED = sh(
           env.FILES_UPDATED = sh(
             script: '''cat /tmp/${COMMIT_SHA}-${BUILD_NUMBER}''',
             returnStdout: true).trim()
@@ -371,9 +480,12 @@ pipeline {
     }
     // Exit the build if the Templated files were just updated
     stage('Template-exit') {
+    // Exit the build if the Templated files were just updated
+    stage('Template-exit') {
       when {
         branch "develop"
         environment name: 'CHANGE_ID', value: ''
+        environment name: 'FILES_UPDATED', value: 'true'
         environment name: 'FILES_UPDATED', value: 'true'
         expression {
           env.CONTAINER_NAME != null
@@ -642,9 +754,12 @@ pipeline {
       when {
         environment name: 'CI', value: 'true'
         environment name: 'EXIT_STATUS', value: ''
+        environment name: 'EXIT_STATUS', value: ''
       }
       steps {
         withCredentials([
+          string(credentialsId: 'ci-tests-s3-key-id', variable: 'S3_KEY'),
+          string(credentialsId: 'ci-tests-s3-secret-access-key	', variable: 'S3_SECRET')
           string(credentialsId: 'ci-tests-s3-key-id', variable: 'S3_KEY'),
           string(credentialsId: 'ci-tests-s3-secret-access-key	', variable: 'S3_SECRET')
         ]) {
@@ -652,14 +767,23 @@ pipeline {
             env.CI_URL = 'https://ci-tests.linuxserver.io/' + env.IMAGE + '/' + env.META_TAG + '/index.html'
             env.CI_JSON_URL = 'https://ci-tests.linuxserver.io/' + env.IMAGE + '/' + env.META_TAG + '/report.json'
           }
+          script{
+            env.CI_URL = 'https://ci-tests.linuxserver.io/' + env.IMAGE + '/' + env.META_TAG + '/index.html'
+            env.CI_JSON_URL = 'https://ci-tests.linuxserver.io/' + env.IMAGE + '/' + env.META_TAG + '/report.json'
+          }
           sh '''#! /bin/bash
+                set -e
+                docker pull ghcr.io/linuxserver/ci:latest
                 set -e
                 docker pull ghcr.io/linuxserver/ci:latest
                 if [ "${MULTIARCH}" == "true" ]; then
                   docker pull ghcr.io/linuxserver/lsiodev-buildcache:arm64v8-${COMMIT_SHA}-${BUILD_NUMBER}
                   docker tag ghcr.io/linuxserver/lsiodev-buildcache:arm64v8-${COMMIT_SHA}-${BUILD_NUMBER} ${IMAGE}:arm64v8-${META_TAG}
+                  docker pull ghcr.io/linuxserver/lsiodev-buildcache:arm64v8-${COMMIT_SHA}-${BUILD_NUMBER}
+                  docker tag ghcr.io/linuxserver/lsiodev-buildcache:arm64v8-${COMMIT_SHA}-${BUILD_NUMBER} ${IMAGE}:arm64v8-${META_TAG}
                 fi
                 docker run --rm \
+                --shm-size=1gb \
                 --shm-size=1gb \
                 -v /var/run/docker.sock:/var/run/docker.sock \
                 -e IMAGE=\"${IMAGE}\" \
@@ -672,9 +796,14 @@ pipeline {
                 -e SECRET_KEY=\"${S3_SECRET}\" \
                 -e ACCESS_KEY=\"${S3_KEY}\" \
                 -e DOCKER_ENV=\"${CI_DOCKERENV}\" \
+                -e SECRET_KEY=\"${S3_SECRET}\" \
+                -e ACCESS_KEY=\"${S3_KEY}\" \
+                -e DOCKER_ENV=\"${CI_DOCKERENV}\" \
                 -e WEB_SCREENSHOT=\"${CI_WEB}\" \
                 -e WEB_AUTH=\"${CI_AUTH}\" \
                 -e WEB_PATH=\"${CI_WEBPATH}\" \
+                -t ghcr.io/linuxserver/ci:latest \
+                python3 test_build.py'''
                 -t ghcr.io/linuxserver/ci:latest \
                 python3 test_build.py'''
         }
@@ -687,6 +816,7 @@ pipeline {
     stage('Docker-Push-Single') {
       when {
         environment name: 'MULTIARCH', value: 'false'
+        environment name: 'EXIT_STATUS', value: ''
         environment name: 'EXIT_STATUS', value: ''
       }
       steps {
@@ -734,6 +864,7 @@ pipeline {
     stage('Docker-Push-Multi') {
       when {
         environment name: 'MULTIARCH', value: 'true'
+        environment name: 'EXIT_STATUS', value: ''
         environment name: 'EXIT_STATUS', value: ''
       }
       steps {
@@ -820,18 +951,23 @@ pipeline {
       }
     }
     // If this is a public release tag it in the LS Github
+    // If this is a public release tag it in the LS Github
     stage('Github-Tag-Push-Release') {
       when {
         branch "develop"
         expression {
           env.LS_RELEASE != env.EXT_RELEASE_CLEAN + '-ls' + env.LS_TAG_NUMBER
+          env.LS_RELEASE != env.EXT_RELEASE_CLEAN + '-ls' + env.LS_TAG_NUMBER
         }
         environment name: 'CHANGE_ID', value: ''
+        environment name: 'EXIT_STATUS', value: ''
         environment name: 'EXIT_STATUS', value: ''
       }
       steps {
         echo "Pushing New tag for current commit ${META_TAG}"
+        echo "Pushing New tag for current commit ${META_TAG}"
         sh '''curl -H "Authorization: token ${GITHUB_TOKEN}" -X POST https://api.github.com/repos/${LS_USER}/${LS_REPO}/git/tags \
+        -d '{"tag":"'${META_TAG}'",\
         -d '{"tag":"'${META_TAG}'",\
              "object": "'${COMMIT_SHA}'",\
              "message": "Tagging Release '${EXT_RELEASE_CLEAN}'-ls'${LS_TAG_NUMBER}' to develop",\
@@ -854,6 +990,7 @@ pipeline {
       when {
         environment name: 'CHANGE_ID', value: ''
         environment name: 'EXIT_STATUS', value: ''
+        environment name: 'EXIT_STATUS', value: ''
       }
       steps {
         withCredentials([
@@ -870,6 +1007,11 @@ pipeline {
                 docker pull ghcr.io/linuxserver/jenkins-builder:latest
                 docker run --rm -e CONTAINER_NAME=${CONTAINER_NAME} -e GITHUB_BRANCH="${BRANCH_NAME}" -v ${TEMPDIR}:/ansible/jenkins ghcr.io/linuxserver/jenkins-builder:latest
                 docker pull ghcr.io/linuxserver/readme-sync
+                set -e
+                TEMPDIR=$(mktemp -d)
+                docker pull ghcr.io/linuxserver/jenkins-builder:latest
+                docker run --rm -e CONTAINER_NAME=${CONTAINER_NAME} -e GITHUB_BRANCH="${BRANCH_NAME}" -v ${TEMPDIR}:/ansible/jenkins ghcr.io/linuxserver/jenkins-builder:latest
+                docker pull ghcr.io/linuxserver/readme-sync
                 docker run --rm=true \
                   -e DOCKERHUB_USERNAME=$DOCKERUSER \
                   -e DOCKERHUB_PASSWORD=$DOCKERPASS \
@@ -879,7 +1021,88 @@ pipeline {
                   -v ${TEMPDIR}/docker-${CONTAINER_NAME}:/mnt \
                   ghcr.io/linuxserver/readme-sync bash -c 'node sync'
                 rm -Rf ${TEMPDIR} '''
+                  -v ${TEMPDIR}/docker-${CONTAINER_NAME}:/mnt \
+                  ghcr.io/linuxserver/readme-sync bash -c 'node sync'
+                rm -Rf ${TEMPDIR} '''
         }
+      }
+    }
+    // If this is a Pull request send the CI link as a comment on it
+    stage('Pull Request Comment') {
+      when {
+        not {environment name: 'CHANGE_ID', value: ''}
+        environment name: 'EXIT_STATUS', value: ''
+      }
+      steps {
+        sh '''#! /bin/bash
+            # Function to retrieve JSON data from URL
+            get_json() {
+              local url="$1"
+              local response=$(curl -s "$url")
+              if [ $? -ne 0 ]; then
+                echo "Failed to retrieve JSON data from $url"
+                return 1
+              fi
+              local json=$(echo "$response" | jq .)
+              if [ $? -ne 0 ]; then
+                echo "Failed to parse JSON data from $url"
+                return 1
+              fi
+              echo "$json"
+            }
+
+            build_table() {
+              local data="$1"
+
+              # Get the keys in the JSON data
+              local keys=$(echo "$data" | jq -r 'to_entries | map(.key) | .[]')
+
+              # Check if keys are empty
+              if [ -z "$keys" ]; then
+                echo "JSON report data does not contain any keys or the report does not exist."
+                return 1
+              fi
+
+              # Build table header
+              local header="| Tag | Passed |\\n| --- | --- |\\n"
+
+              # Loop through the JSON data to build the table rows
+              local rows=""
+              for build in $keys; do
+                local status=$(echo "$data" | jq -r ".[\\"$build\\"].test_success")
+                if [ "$status" = "true" ]; then
+                  status="✅"
+                else
+                  status="❌"
+                fi
+                local row="| "$build" | "$status" |\\n"
+                rows="${rows}${row}"
+              done
+
+              local table="${header}${rows}"
+              local escaped_table=$(echo "$table" | sed 's/\"/\\\\"/g')
+              echo "$escaped_table"
+            }
+
+            if [[ "${CI}" = "true" ]]; then
+              # Retrieve JSON data from URL
+              data=$(get_json "$CI_JSON_URL")
+              # Create table from JSON data
+              table=$(build_table "$data")
+              echo -e "$table"
+
+              curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/repos/$LS_USER/$LS_REPO/issues/$PULL_REQUEST/comments" \
+                -d "{\\"body\\": \\"I am a bot, here are the test results for this PR: \\n${CI_URL}\\n${SHELLCHECK_URL}\\n${table}\\"}"
+            else
+              curl -X POST -H "Authorization: token $GITHUB_TOKEN" \
+                -H "Accept: application/vnd.github.v3+json" \
+                "https://api.github.com/repos/$LS_USER/$LS_REPO/issues/$PULL_REQUEST/comments" \
+                -d "{\\"body\\": \\"I am a bot, here is the pushed image/manifest for this PR: \\n\\n\\`${GITHUBIMAGE}:${META_TAG}\\`\\"}"
+            fi
+            '''
+
       }
     }
     // If this is a Pull request send the CI link as a comment on it
@@ -965,6 +1188,33 @@ pipeline {
      Send status to Discord
      ###################### */
   post {
+    always {
+      script{
+        if (env.EXIT_STATUS == "ABORTED"){
+          sh 'echo "build aborted"'
+        }
+        else if (currentBuild.currentResult == "SUCCESS"){
+          sh ''' curl -X POST -H "Content-Type: application/json" --data '{"avatar_url": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/jenkins-avatar.png","embeds": [{"color": 1681177,\
+                 "description": "**Build:**  '${BUILD_NUMBER}'\\n**CI Results:**  '${CI_URL}'\\n**ShellCheck Results:**  '${SHELLCHECK_URL}'\\n**Status:**  Success\\n**Job:** '${RUN_DISPLAY_URL}'\\n**Change:** '${CODE_URL}'\\n**External Release:**: '${RELEASE_LINK}'\\n**DockerHub:** '${DOCKERHUB_LINK}'\\n"}],\
+                 "username": "Jenkins"}' ${BUILDS_DISCORD} '''
+        }
+        else {
+          sh ''' curl -X POST -H "Content-Type: application/json" --data '{"avatar_url": "https://raw.githubusercontent.com/linuxserver/docker-templates/master/linuxserver.io/img/jenkins-avatar.png","embeds": [{"color": 16711680,\
+                 "description": "**Build:**  '${BUILD_NUMBER}'\\n**CI Results:**  '${CI_URL}'\\n**ShellCheck Results:**  '${SHELLCHECK_URL}'\\n**Status:**  failure\\n**Job:** '${RUN_DISPLAY_URL}'\\n**Change:** '${CODE_URL}'\\n**External Release:**: '${RELEASE_LINK}'\\n**DockerHub:** '${DOCKERHUB_LINK}'\\n"}],\
+                 "username": "Jenkins"}' ${BUILDS_DISCORD} '''
+        }
+      }
+    }
+    cleanup {
+      sh '''#! /bin/bash
+            echo "Performing docker system prune!!"
+            containers=$(docker ps -aq)
+            if [[ -n "${containers}" ]]; then
+              docker stop ${containers}
+            fi
+            docker system prune -af --volumes || :
+         '''
+      cleanWs()
     always {
       script{
         if (env.EXIT_STATUS == "ABORTED"){

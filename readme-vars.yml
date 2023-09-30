@@ -19,13 +19,22 @@ development_versions_items:
   - { tag: "latest", desc: "Stable releases from Sonarr (currently v3)" }
   - { tag: "develop", desc: "Development releases from Sonarr (currently v4)" }
 
+# development version
+development_versions: true
+development_versions_items:
+  - { tag: "latest", desc: "Stable releases from Sonarr (currently v3)" }
+  - { tag: "develop", desc: "Development releases from Sonarr (currently v4)" }
+
 # container parameters
 param_container_name: "{{ project_name }}"
 param_usage_include_vols: true
 param_volumes:
-  - { vol_path: "/config", vol_host_path: "<path to data>", desc: "Database and sonarr configs" }
-  - { vol_path: "/tv", vol_host_path: "<path/to/tvseries>", desc: "Location of TV library on disk" }
-  - { vol_path: "/downloads", vol_host_path: "<path/to/downloadclient-downloads>", desc: "Location of download managers output directory" }
+  - { vol_path: "/config", vol_host_path: "/path/to/data", desc: "Database and sonarr configs" }
+  
+opt_param_usage_include_vols: true
+opt_param_volumes:
+  - { vol_path: "/tv", vol_host_path: "/path/to/tvseries", desc: "Location of TV library on disk (See note in Application setup)" }
+  - { vol_path: "/downloads", vol_host_path: "/path/to/downloadclient-downloads", desc: "Location of download managers output directory (See note in Application setup)" }
 
 param_usage_include_ports: true
 param_ports:
@@ -70,6 +79,7 @@ changelogs:
   - { date: "14.04.17:", desc: "Change to mount /etc/localtime in README, thanks cbgj." }
   - { date: "13.04.17:", desc: "Switch to official mono repository." }
   - { date: "30.09.16:", desc: "Fix umask" }
+  - { date: "23.09.16:", desc: "Add cd to /opt fixes redirects with althub (issue #25), make XDG config environment variable" }
   - { date: "23.09.16:", desc: "Add cd to /opt fixes redirects with althub (issue #25), make XDG config environment variable" }
   - { date: "15.09.16:", desc: "Add libcurl3 package." }
   - { date: "09.09.16:", desc: "Add layer badges to README." }

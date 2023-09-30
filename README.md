@@ -11,7 +11,20 @@
 [![Open Collective](https://img.shields.io/opencollective/all/linuxserver.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=Supporters&logo=open%20collective)](https://opencollective.com/linuxserver "please consider helping us by either donating or contributing to our budget")
 
 The [LinuxServer.io](https://linuxserver.io) team brings you another container release featuring:
+[![Blog](https://img.shields.io/static/v1.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=linuxserver.io&message=Blog)](https://blog.linuxserver.io "all the things you can do with our containers including How-To guides, opinions and much more!")
+[![Discord](https://img.shields.io/discord/354974912613449730.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=Discord&logo=discord)](https://discord.gg/YWrKVTn "realtime support / chat with the community and the team.")
+[![Discourse](https://img.shields.io/discourse/https/discourse.linuxserver.io/topics.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=discourse)](https://discourse.linuxserver.io "post on our community forum.")
+[![Fleet](https://img.shields.io/static/v1.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=linuxserver.io&message=Fleet)](https://fleet.linuxserver.io "an online web interface which displays all of our maintained images.")
+[![GitHub](https://img.shields.io/static/v1.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=linuxserver.io&message=GitHub&logo=github)](https://github.com/linuxserver "view the source for all of our repositories.")
+[![Open Collective](https://img.shields.io/opencollective/all/linuxserver.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=Supporters&logo=open%20collective)](https://opencollective.com/linuxserver "please consider helping us by either donating or contributing to our budget")
 
+The [LinuxServer.io](https://linuxserver.io) team brings you another container release featuring:
+
+* regular and timely application updates
+* easy user mappings (PGID, PUID)
+* custom base image with s6 overlay
+* weekly base OS updates with common layers across the entire LinuxServer.io ecosystem to minimise space usage, down time and bandwidth
+* regular security updates
 * regular and timely application updates
 * easy user mappings (PGID, PUID)
 * custom base image with s6 overlay
@@ -20,7 +33,13 @@ The [LinuxServer.io](https://linuxserver.io) team brings you another container r
 
 Find us at:
 
+
 * [Blog](https://blog.linuxserver.io) - all the things you can do with our containers including How-To guides, opinions and much more!
+* [Discord](https://discord.gg/YWrKVTn) - realtime support / chat with the community and the team.
+* [Discourse](https://discourse.linuxserver.io) - post on our community forum.
+* [Fleet](https://fleet.linuxserver.io) - an online web interface which displays all of our maintained images.
+* [GitHub](https://github.com/linuxserver) - view the source for all of our repositories.
+* [Open Collective](https://opencollective.com/linuxserver) - please consider helping us by either donating or contributing to our budget
 * [Discord](https://discord.gg/YWrKVTn) - realtime support / chat with the community and the team.
 * [Discourse](https://discourse.linuxserver.io) - post on our community forum.
 * [Fleet](https://fleet.linuxserver.io) - an online web interface which displays all of our maintained images.
@@ -77,6 +96,31 @@ We have set `/tv` and `/downloads` as ***optional paths***, this is because it i
 Use the optional paths if you dont understand, or dont want hardlinks/atomic moves.
 
 The folks over at servarr.com wrote a good [write-up](https://wiki.servarr.com/Docker_Guide#Consistent_and_well_planned_paths) on how to get started with this.
+| Architecture | Available | Tag |
+| :----: | :----: | ---- |
+| x86-64 | ✅ | amd64-\<version tag\> |
+| arm64 | ✅ | arm64v8-\<version tag\> |
+| armhf | ❌ | |
+
+## Version Tags
+
+This image provides various versions that are available via tags. Please read the descriptions carefully and exercise caution when using unstable or development tags.
+
+| Tag | Available | Description |
+| :----: | :----: |--- |
+| latest | ✅ | Stable releases from Sonarr (currently v3) |
+| develop | ✅ | Development releases from Sonarr (currently v4) |
+## Application Setup
+
+Access the webui at `<your-ip>:8989`, for more information check out [Sonarr](https://sonarr.tv/).
+
+### Media folders
+
+We have set `/tv` and `/downloads` as ***optional paths***, this is because it is the easiest way to get started. While easy to use, it has some drawbacks. Mainly losing the ability to hardlink (TL;DR a way for a file to exist in multiple places on the same file system while only consuming one file worth of space), or atomic move (TL;DR instant file moves, rather than copy+delete) files while processing content.
+
+Use the optional paths if you dont understand, or dont want hardlinks/atomic moves.
+
+The folks over at servarr.com wrote a good [write-up](https://wiki.servarr.com/Docker_Guide#Consistent_and_well_planned_paths) on how to get started with this.
 
 ## Usage
 
@@ -85,7 +129,11 @@ Here are some example snippets to help you get started creating a container.
 ### docker-compose (recommended, [click here for more info](https://docs.linuxserver.io/general/docker-compose))
 
 ```yaml
+### docker-compose (recommended, [click here for more info](https://docs.linuxserver.io/general/docker-compose))
+
+```yaml
 ---
+version: "2.1"
 version: "2.1"
 services:
   sonarr:
@@ -95,10 +143,13 @@ services:
       - PUID=1000
       - PGID=1000
       - TZ=Etc/UTC
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/UTC
     volumes:
-      - <path to data>:/config
-      - <path/to/tvseries>:/tv
-      - <path/to/downloadclient-downloads>:/downloads
+      - /path/to/data:/config
+      - /path/to/tvseries:/tv #optional
+      - /path/to/downloadclient-downloads:/downloads #optional
     ports:
       - 8989:8989
     restart: unless-stopped
@@ -131,6 +182,9 @@ Container images are configured using parameters passed at runtime (such as thos
 | `-e PUID=1000` | for UserID - see below for explanation |
 | `-e PGID=1000` | for GroupID - see below for explanation |
 | `-e TZ=Etc/UTC` | specify a timezone to use, see this [list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List). |
+| `-e PUID=1000` | for UserID - see below for explanation |
+| `-e PGID=1000` | for GroupID - see below for explanation |
+| `-e TZ=Etc/UTC` | specify a timezone to use, see this [list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List). |
 | `-v /config` | Database and sonarr configs |
 | `-v /tv` | Location of TV library on disk |
 | `-v /downloads` | Location of download managers output directory |
@@ -159,22 +213,29 @@ When using volumes (`-v` flags) permissions issues can arise between the host OS
 Ensure any volume directories on the host are owned by the same user you specify and any permissions issues will vanish like magic.
 
 In this instance `PUID=1000` and `PGID=1000`, to find yours use `id user` as below:
+In this instance `PUID=1000` and `PGID=1000`, to find yours use `id user` as below:
 
 ```bash
+```bash
   $ id username
+    uid=1000(dockeruser) gid=1000(dockergroup) groups=1000(dockergroup)
     uid=1000(dockeruser) gid=1000(dockergroup) groups=1000(dockergroup)
 ```
 
 ## Docker Mods
+## Docker Mods
 
 [![Docker Mods](https://img.shields.io/badge/dynamic/yaml?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=sonarr&query=%24.mods%5B%27sonarr%27%5D.mod_count&url=https%3A%2F%2Fraw.githubusercontent.com%2Flinuxserver%2Fdocker-mods%2Fmaster%2Fmod-list.yml)](https://mods.linuxserver.io/?mod=sonarr "view available mods for this container.") [![Docker Universal Mods](https://img.shields.io/badge/dynamic/yaml?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=universal&query=%24.mods%5B%27universal%27%5D.mod_count&url=https%3A%2F%2Fraw.githubusercontent.com%2Flinuxserver%2Fdocker-mods%2Fmaster%2Fmod-list.yml)](https://mods.linuxserver.io/?mod=universal "view available universal mods.")
+[![Docker Mods](https://img.shields.io/badge/dynamic/yaml?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=sonarr&query=%24.mods%5B%27sonarr%27%5D.mod_count&url=https%3A%2F%2Fraw.githubusercontent.com%2Flinuxserver%2Fdocker-mods%2Fmaster%2Fmod-list.yml)](https://mods.linuxserver.io/?mod=sonarr "view available mods for this container.") [![Docker Universal Mods](https://img.shields.io/badge/dynamic/yaml?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=universal&query=%24.mods%5B%27universal%27%5D.mod_count&url=https%3A%2F%2Fraw.githubusercontent.com%2Flinuxserver%2Fdocker-mods%2Fmaster%2Fmod-list.yml)](https://mods.linuxserver.io/?mod=universal "view available universal mods.")
 
+We publish various [Docker Mods](https://github.com/linuxserver/docker-mods) to enable additional functionality within the containers. The list of Mods available for this image (if any) as well as universal mods that can be applied to any one of our images can be accessed via the dynamic badges above.
 We publish various [Docker Mods](https://github.com/linuxserver/docker-mods) to enable additional functionality within the containers. The list of Mods available for this image (if any) as well as universal mods that can be applied to any one of our images can be accessed via the dynamic badges above.
 
 ## Support Info
 
 * Shell access whilst the container is running: `docker exec -it sonarr /bin/bash`
 * To monitor the logs of the container in realtime: `docker logs -f sonarr`
+* container version number
 * container version number
   * `docker inspect -f '{{ index .Config.Labels "build_version" }}' sonarr`
 * image version number
@@ -265,6 +326,7 @@ Once registered you can define the dockerfile to use with `-f Dockerfile.aarch64
 * **14.04.17:** - Change to mount /etc/localtime in README, thanks cbgj.
 * **13.04.17:** - Switch to official mono repository.
 * **30.09.16:** - Fix umask
+* **23.09.16:** - Add cd to /opt fixes redirects with althub (issue #25), make XDG config environment variable
 * **23.09.16:** - Add cd to /opt fixes redirects with althub (issue #25), make XDG config environment variable
 * **15.09.16:** - Add libcurl3 package.
 * **09.09.16:** - Add layer badges to README.
