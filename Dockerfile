@@ -23,10 +23,6 @@ RUN \
     xmlstarlet=1.6.1-2.1 && \
   echo "**** install sonarr ****" && \
   mkdir -p /app/sonarr/bin && \
-  if [ -z ${SONARR_VERSION+x} ]; then \
-    SONARR_VERSION=$(curl -sX GET http://services.sonarr.tv/v1/releases \
-    | jq -r "first(.[] | select(.branch==\"$SONARR_BRANCH\") | .version)"); \
-  fi && \
   case ${BUILD_ARCH} in \
       "armv7") \
           ARCH="arm" \
