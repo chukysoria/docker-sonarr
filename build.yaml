@@ -1,5 +1,5 @@
 ---
 build_from:
-  aarch64: ghcr.io/chukysoria/baseimage-ubuntu:v0.2.1-jammy
-  x86_64: ghcr.io/chukysoria/baseimage-ubuntu:v0.2.1-jammy
-  armv7: ghcr.io/chukysoria/baseimage-ubuntu:v0.2.1-jammy
+  aarch64: ghcr.io/chukysoria/baseimage-ubuntu:v0.2.3-jammy
+  x86_64: ghcr.io/chukysoria/baseimage-ubuntu:v0.2.3-jammy
+  armv7: ghcr.io/chukysoria/baseimage-ubuntu:v0.2.3-jammy
