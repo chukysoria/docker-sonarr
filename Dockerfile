@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG BUILD_FROM=ghcr.io/chukysoria/baseimage-ubuntu:v0.1.6-jammy
+ARG BUILD_FROM=ghcr.io/chukysoria/baseimage-ubuntu:v0.2.3-jammy
 
 FROM ${BUILD_FROM} 
 
@@ -8,7 +8,7 @@ FROM ${BUILD_FROM}
 ARG BUILD_DATE
 ARG BUILD_VERSION
 ARG BUILD_ARCH
-ARG BUILD_EXT_RELEASE="4.0.0.703"
+ARG BUILD_EXT_RELEASE="4.0.0.733"
 LABEL build_version="Chukyserver.io version:- ${BUILD_VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="chukysoria"
 
