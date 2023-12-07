@@ -1,41 +1,10 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "rebaseWhen": "behind-base-branch",
-  "dependencyDashboard": true,
-  "labels": ["dependencies", "no-stale"],
-  "commitMessagePrefix": "⬆️",
-  "commitMessageTopic": "{{depName}}",
-  "assignees": ["chukysoria"],
-  "customManagers": [
-    {
-      "fileMatch": ["(^|/)Dockerfile$", "(^|/)build.yaml$"],
-      "matchStringsStrategy": "any",
-      "matchStrings": [
-        "ARG BUILD_FROM=(?<depName>.*?):(?<currentValue>.*?)\\s+",
-        "(aarch64|armv7|x86_64):\\s[\"']?(?<depName>.*?):(?<currentValue>.*?)[\"']?\\s"
-      ],
-      "datasourceTemplate": "docker"
-    },
-    {
-      "fileMatch": ["(^|/)Dockerfile$"],
-      "matchStringsStrategy": "any",
-      "matchStrings": [
-        "\\s\\s(?<package>[a-z0-9-]+)=(?<currentValue>[a-z0-9-_+~.]+)\\s+"
-      ],
-      "versioningTemplate": "deb",
-      "datasourceTemplate": "repology",
-      "depNameTemplate": "ubuntu_22_04/{{package}}"
-    },
-    {
-      "fileMatch": ["(^|/)Dockerfile$", "(^|/)config.yaml$"],
-      "matchStrings": [
-        "ARG BUILD_EXT_RELEASE=[\"']?(?<currentValue>.+?)[\"']?\\s+",
-        "ext_release: (?<currentValue>.+)\\s+"
-      ],
-      "versioningTemplate": "loose",
-      "datasourceTemplate": "custom.sonarr",
-      "depNameTemplate": "Sonarr"
-    }
+  "extends": [
+    "local>chukysoria/renovate-config",
+    "local>chukysoria/renovate-config:docker-build",
+    "local>chukysoria/renovate-config:os-package(ubuntu_22_04)",
+    "local>chukysoria/renovate-config:ext-release(custom.sonarr,Sonarr)"
   ],
   "customDatasources": {
     "sonarr": {
