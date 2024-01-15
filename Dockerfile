@@ -8,13 +8,13 @@ FROM ${BUILD_FROM}
 ARG BUILD_DATE
 ARG BUILD_VERSION
 ARG BUILD_ARCH
-ARG BUILD_EXT_RELEASE="4.0.0.836"
+ARG BUILD_EXT_RELEASE="4.0.0.748"
 LABEL build_version="Chukyserver.io version:- ${BUILD_VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="chukysoria"
 
 # set environment variables
 ENV XDG_CONFIG_HOME="/config/xdg"
-ENV SONARR_BRANCH="develop"
+ENV SONARR_BRANCH="main"
 
 RUN \
   echo "**** install packages ****" && \
