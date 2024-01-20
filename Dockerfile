@@ -60,3 +60,5 @@ COPY root/ /
 EXPOSE 8989
 
 VOLUME /config
+
+HEALTHCHECK --interval=30s --timeout=30s --start-period=2m --start-interval=5s --retries=5 CMD ["/etc/s6-overlay/s6-rc.d/svc-sonarr/data/check"]
