@@ -40,7 +40,7 @@ RUN \
   esac && \
   curl -o \
     /tmp/sonarr.tar.gz -L \
-    "https://download.sonarr.tv/v4/${SONARR_BRANCH}/${BUILD_EXT_RELEASE}/Sonarr.${SONARR_BRANCH}.${BUILD_EXT_RELEASE}.linux-${ARCH}.tar.gz" && \
+    "https://github.com/Sonarr/Sonarr/releases/download/v${BUILD_EXT_RELEASE}/Sonarr.${SONARR_BRANCH}.${BUILD_EXT_RELEASE}.linux-${ARCH}.tar.gz" && \
   tar xzf \
     /tmp/sonarr.tar.gz -C \
     /app/sonarr/bin --strip-components=1 && \
