@@ -19,9 +19,9 @@ ENV SONARR_BRANCH="main"
 RUN \
   echo "**** install packages ****" && \
   apk add --no-cache \
-    icu-libs \
-    sqlite-libs \
-    xmlstarlet && \
+    icu-libs=74.2-r0 \
+    sqlite-libs=3.45.3-r1 \
+    xmlstarlet=1.6.1-r2 && \
   echo "**** install sonarr ****" && \
   mkdir -p /app/sonarr/bin && \
   case ${BUILD_ARCH} in \
