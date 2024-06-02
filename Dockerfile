@@ -1,6 +1,6 @@
 # syntax=docker/dockerfile:1
 
-ARG BUILD_FROM=ghcr.io/chukysoria/baseimage-ubuntu:v0.2.23-jammy
+ARG BUILD_FROM=ghcr.io/chukysoria/baseimage-ubuntu:v0.2.24-jammy
 
 FROM ${BUILD_FROM} 
 
