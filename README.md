@@ -47,7 +47,7 @@ Find us at:
 
 # [linuxserver/sonarr](https://github.com/linuxserver/docker-sonarr)
 
-[![Scarf.io pulls](https://scarf.sh/installs-badge/linuxserver-ci/linuxserver%2Fsonarr?color=94398d&label-color=555555&logo-color=ffffff&style=for-the-badge&package-type=docker)](https://scarf.sh/gateway/linuxserver-ci/docker/linuxserver%2Fsonarr)
+[![Scarf.io pulls](https://scarf.sh/installs-badge/linuxserver-ci/linuxserver%2Fsonarr?color=94398d&label-color=555555&logo-color=ffffff&style=for-the-badge&package-type=docker)](https://scarf.sh)
 [![GitHub Stars](https://img.shields.io/github/stars/linuxserver/docker-sonarr.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/linuxserver/docker-sonarr)
 [![GitHub Release](https://img.shields.io/github/release/linuxserver/docker-sonarr.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&logo=github)](https://github.com/linuxserver/docker-sonarr/releases)
 [![GitHub Package Repository](https://img.shields.io/static/v1.svg?color=94398d&labelColor=555555&logoColor=ffffff&style=for-the-badge&label=linuxserver.io&message=GitHub%20Package&logo=github)](https://github.com/linuxserver/docker-sonarr/packages)
@@ -64,6 +64,7 @@ Find us at:
 
 ## Supported Architectures
 
+We utilise the docker manifest for multi-platform awareness. More information is available from docker [here](https://distribution.github.io/distribution/spec/manifest-v2-2/#manifest-list) and our announcement [here](https://blog.linuxserver.io/2019/02/21/the-lsio-pipeline-project/).
 We utilise the docker manifest for multi-platform awareness. More information is available from docker [here](https://distribution.github.io/distribution/spec/manifest-v2-2/#manifest-list) and our announcement [here](https://blog.linuxserver.io/2019/02/21/the-lsio-pipeline-project/).
 
 Simply pulling `lscr.io/linuxserver/sonarr:develop` should retrieve the correct image for your arch, but you can also pull specific arch images via tags.
@@ -119,12 +120,13 @@ Access the webui at `<your-ip>:8989`, for more information check out [Sonarr](ht
 
 We have set `/tv` and `/downloads` as ***optional paths***, this is because it is the easiest way to get started. While easy to use, it has some drawbacks. Mainly losing the ability to hardlink (TL;DR a way for a file to exist in multiple places on the same file system while only consuming one file worth of space), or atomic move (TL;DR instant file moves, rather than copy+delete) files while processing content.
 
-Use the optional paths if you dont understand, or dont want hardlinks/atomic moves.
+Use the optional paths if you don't understand, or don't want hardlinks/atomic moves.
 
 The folks over at servarr.com wrote a good [write-up](https://wiki.servarr.com/Docker_Guide#Consistent_and_well_planned_paths) on how to get started with this.
 
 ## Usage
 
+To help you get started creating a container from this image you can either use docker-compose or the docker cli.
 To help you get started creating a container from this image you can either use docker-compose or the docker cli.
 
 ### docker-compose (recommended, [click here for more info](https://docs.linuxserver.io/general/docker-compose))
@@ -148,7 +150,7 @@ services:
       - PGID=1000
       - TZ=Etc/UTC
     volumes:
-      - /path/to/data:/config
+      - /path/to/sonarr/data:/config
       - /path/to/tvseries:/tv #optional
       - /path/to/downloadclient-downloads:/downloads #optional
     ports:
@@ -175,6 +177,7 @@ docker run -d \
 ## Parameters
 
 Containers are configured using parameters passed at runtime (such as those above). These parameters are separated by a colon and indicate `<external>:<internal>` respectively. For example, `-p 8080:80` would expose port `80` from inside the container to be accessible from the host's IP on port `8080` outside the container.
+Containers are configured using parameters passed at runtime (such as those above). These parameters are separated by a colon and indicate `<external>:<internal>` respectively. For example, `-p 8080:80` would expose port `80` from inside the container to be accessible from the host's IP on port `8080` outside the container.
 
 | Parameter | Function |
 | :----: | --- |
@@ -197,8 +200,10 @@ As an example:
 
 ```bash
 -e FILE__MYVAR=/run/secrets/mysecretvariable
+-e FILE__MYVAR=/run/secrets/mysecretvariable
 ```
 
+Will set the environment variable `MYVAR` based on the contents of the `/run/secrets/mysecretvariable` file.
 Will set the environment variable `MYVAR` based on the contents of the `/run/secrets/mysecretvariable` file.
 
 ## Umask for running applications
@@ -208,6 +213,7 @@ Keep in mind umask is not chmod it subtracts from permissions based on it's valu
 
 ## User / Group Identifiers
 
+When using volumes (`-v` flags), permissions issues can arise between the host OS and the container, we avoid this issue by allowing you to specify the user `PUID` and group `PGID`.
 When using volumes (`-v` flags), permissions issues can arise between the host OS and the container, we avoid this issue by allowing you to specify the user `PUID` and group `PGID`.
 
 Ensure any volume directories on the host are owned by the same user you specify and any permissions issues will vanish like magic.
@@ -272,12 +278,43 @@ We publish various [Docker Mods](https://github.com/linuxserver/docker-mods) to 
 
 ## Updating Info
 
-Most of our images are static, versioned, and require an image update and container recreation to update the app inside. With some exceptions (ie. nextcloud, plex), we do not recommend or support updating apps inside the container. Please consult the [Application Setup](#application-setup) section above to see if it is recommended for the image.
+Most of our images are static, versioned, and require an image update and container recreation to update the app inside. With some exceptions (noted in the relevant readme.md), we do not recommend or support updating apps inside the container. Please consult the [Application Setup](#application-setup) section above to see if it is recommended for the image.
 
 Below are the instructions for updating containers:
 
 ### Via Docker Compose
 
+* Update images:
+    * All images:
+
+        ```bash
+        docker-compose pull
+        ```
+
+    * Single image:
+
+        ```bash
+        docker-compose pull sonarr
+        ```
+
+* Update containers:
+    * All containers:
+
+        ```bash
+        docker-compose up -d
+        ```
+
+    * Single container:
+
+        ```bash
+        docker-compose up -d sonarr
+        ```
+
+* You can also remove the old dangling images:
+
+    ```bash
+    docker image prune
+    ```
 * Update images:
     * All images:
 
@@ -354,6 +391,7 @@ Below are the instructions for updating containers:
 
 ### Image Update Notifications - Diun (Docker Image Update Notifier)
 
+**tip**: We recommend [Diun](https://crazymax.dev/diun/) for update notifications. Other tools that automatically update containers unattended are not recommended or supported.
 **tip**: We recommend [Diun](https://crazymax.dev/diun/) for update notifications. Other tools that automatically update containers unattended are not recommended or supported.
 
 ## Building locally
