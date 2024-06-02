@@ -1,14 +1,15 @@
 # syntax=docker/dockerfile:1
 
-ARG BUILD_FROM=ghcr.io/chukysoria/baseimage-ubuntu:v0.2.24-jammy
+ARG BUILD_FROM=ghcr.io/chukysoria/baseimage-alpine:v0.6.0-3.20
 
 FROM ${BUILD_FROM} 
 
 # set version label
 ARG BUILD_DATE
 ARG BUILD_VERSION
-ARG BUILD_ARCH
+ARG BUILD_ARCH="x86_64"
 ARG BUILD_EXT_RELEASE="4.0.5.1710"
+
 LABEL build_version="Chukyserver.io version:- ${BUILD_VERSION} Build-date:- ${BUILD_DATE}"
 LABEL maintainer="chukysoria"
 
@@ -18,9 +19,10 @@ ENV SONARR_BRANCH="main"
 
 RUN \
   echo "**** install packages ****" && \
-  apt-get update && \
-  apt-get install -y --no-install-recommends \
-    xmlstarlet=1.6.1-2.1 && \
+  apk add --no-cache \
+    icu-libs=74.2-r0 \
+    sqlite-libs=3.45.3-r1 \
+    xmlstarlet=1.6.1-r2 && \
   echo "**** install sonarr ****" && \
   mkdir -p /app/sonarr/bin && \
   case ${BUILD_ARCH} in \
@@ -46,11 +48,8 @@ RUN \
     /app/sonarr/bin --strip-components=1 && \
   echo -e "UpdateMethod=docker\nBranch=${SONARR_BRANCH}\nPackageVersion=${BUILD_VERSION}\nPackageAuthor=[linuxserver.io](https://linuxserver.io)" > /app/sonarr/package_info && \
   echo "**** cleanup ****" && \
-  apt-get clean && \
   rm -rf \
     /app/sonarr/bin/Sonarr.Update \
-    /var/lib/apt/lists/* \
-    /var/tmp/* \
     /tmp/*
 
 # add local files
