@@ -7,4 +7,3 @@ ext_release: 4.0.5.1710
 arch:
   - aarch64
   - x86_64
-  - armv7
