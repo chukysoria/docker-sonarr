@@ -14,8 +14,11 @@ LABEL build_version="Chukyserver.io version:- ${BUILD_VERSION} Build-date:- ${BU
 LABEL maintainer="chukysoria"
 
 # set environment variables
-ENV XDG_CONFIG_HOME="/config/xdg"
-ENV SONARR_BRANCH="main"
+ENV XDG_CONFIG_HOME="/config/xdg" \
+  SONARR_CHANNEL="v4-stable" \
+  SONARR_BRANCH="main" \
+  COMPlus_EnableDiagnostics=0 \
+  TMPDIR=/run/sonarr-temp
 
 RUN \
   echo "**** install packages ****" && \

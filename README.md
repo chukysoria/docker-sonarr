@@ -124,6 +124,10 @@ Use the optional paths if you don't understand, or don't want hardlinks/atomic m
 
 The folks over at servarr.com wrote a good [write-up](https://wiki.servarr.com/Docker_Guide#Consistent_and_well_planned_paths) on how to get started with this.
 
+## Read-Only Operation
+
+This image can be run with a read-only container filesystem. For details please [read the docs](https://docs.linuxserver.io/misc/read-only/).
+
 ## Usage
 
 To help you get started creating a container from this image you can either use docker-compose or the docker cli.
@@ -189,8 +193,9 @@ Containers are configured using parameters passed at runtime (such as those abov
 | `-e PGID=1000` | for GroupID - see below for explanation |
 | `-e TZ=Etc/UTC` | specify a timezone to use, see this [list](https://en.wikipedia.org/wiki/List_of_tz_database_time_zones#List). |
 | `-v /config` | Database and sonarr configs |
-| `-v /tv` | Location of TV library on disk |
-| `-v /downloads` | Location of download managers output directory |
+| `-v /tv` | Location of TV library on disk (See note in Application setup) |
+| `-v /downloads` | Location of download managers output directory (See note in Application setup) |
+| `--read-only=true` | Run container with a read-only filesystem. Please [read the docs](https://docs.linuxserver.io/misc/read-only/). |
 
 ## Environment variables from files (Docker secrets)
 
@@ -218,16 +223,6 @@ When using volumes (`-v` flags), permissions issues can arise between the host O
 
 Ensure any volume directories on the host are owned by the same user you specify and any permissions issues will vanish like magic.
 
-<<<<<<< HEAD
-In this instance `PUID=1000` and `PGID=1000`, to find yours use `id user` as below:
-In this instance `PUID=1000` and `PGID=1000`, to find yours use `id user` as below:
-
-```bash
-```bash
-  $ id username
-    uid=1000(dockeruser) gid=1000(dockergroup) groups=1000(dockergroup)
-    uid=1000(dockeruser) gid=1000(dockergroup) groups=1000(dockergroup)
-=======
 In this instance `PUID=1000` and `PGID=1000`, to find yours use `id your_user` as below:
 
 ```bash
@@ -238,7 +233,6 @@ Example output:
 
 ```text
 uid=1000(your_user) gid=1000(your_user) groups=1000(your_user)
->>>>>>> 5ec3546ba1d7b4014a263c5c9b1e53a7e1e60ff6
 ```
 
 ## Docker Mods
@@ -391,8 +385,8 @@ Below are the instructions for updating containers:
 
 ### Image Update Notifications - Diun (Docker Image Update Notifier)
 
-**tip**: We recommend [Diun](https://crazymax.dev/diun/) for update notifications. Other tools that automatically update containers unattended are not recommended or supported.
-**tip**: We recommend [Diun](https://crazymax.dev/diun/) for update notifications. Other tools that automatically update containers unattended are not recommended or supported.
+>[!TIP]
+>We recommend [Diun](https://crazymax.dev/diun/) for update notifications. Other tools that automatically update containers unattended are not recommended or supported.
 
 ## Building locally
 
