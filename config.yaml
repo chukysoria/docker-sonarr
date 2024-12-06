@@ -1,6 +1,6 @@
 ---
 image: sonarr
-version: v0.3.24
+version: v0.3.25
 name: Sonarr
 description: "[Sonarr](https://sonarr.tv/) (formerly NZBdrone) is a PVR for usenet and bittorrent users. It can monitor multiple RSS feeds for new episodes of your favorite shows and will grab, sort and rename them. It can also be configured to automatically upgrade the quality of files already downloaded when a better quality format becomes available."
 ext_release: 4.0.11.2680
