@@ -23,7 +23,7 @@ RUN \
   echo "**** install packages ****" && \
   apk add --no-cache \
     icu-libs=74.2-r0 \
-    sqlite-libs=3.48.0-r0 \
+    sqlite-libs=3.48.0-r1 \
     xmlstarlet=1.6.1-r2 && \
   echo "**** install sonarr ****" && \
   mkdir -p /app/sonarr/bin && \
