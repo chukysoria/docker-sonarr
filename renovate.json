@@ -8,9 +8,9 @@
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "(^|/)Dockerfile$",
-        "(^|/)config.yaml$"
+      "managerFilePatterns": [
+        "/(^|/)Dockerfile$/",
+        "/(^|/)config.yaml$/"
       ],
       "matchStrings": [
         "ARG BUILD_EXT_RELEASE=[\"']?(?<currentValue>.+?)[\"']?\\s+",
