@@ -22,7 +22,7 @@ ENV XDG_CONFIG_HOME="/config/xdg" \
 RUN \
   echo "**** install packages ****" && \
   apk add --no-cache \
-    icu-libs=74.2-r0 \
+    icu-libs=76.1-r0 \
     sqlite-libs=3.49.2-r0 \
     xmlstarlet=1.6.1-r2 && \
   echo "**** install sonarr ****" && \
